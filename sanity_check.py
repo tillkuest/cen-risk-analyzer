@@ -1,6 +1,7 @@
 from datetime import date
 from src.models import Country, MultiCountryPolicy
 
+
 # Hilfsfunktion: Country mit beliebigem PD bauen
 # (Trick: Rating "AAA" nur damit die Klasse nicht meckert, dann pd manuell setzen)
 def make_country(name, pd_value):
@@ -83,3 +84,29 @@ print(f"max_lol:         {edge_policy.max_lol():,.0f}")
 print(f"min(...):        {min(weighted_sum, edge_policy.max_lol()):,.0f}  ← greift!")
 print(f"calculate_pd():  {edge_policy.calculate_pd():.4f}")
 print(f"erwartet:        0.6000  (= b × maxLoL / maxLoL = b)")
+
+
+## data_fetcher
+# --- API Tests ---
+from src.data_fetcher import fetch_sovereign_ratings, fetch_exchange_rates
+
+print("\n")
+print("=" * 50)
+print("API TESTS")
+print("=" * 50)
+
+ratings = fetch_sovereign_ratings()
+print(f"Länder mit Ratings: {len(ratings)}")
+print(f"Beispiele: Switzerland={ratings.get('Switzerland')}, Germany={ratings.get('Germany')}")
+
+rates = fetch_exchange_rates()
+print(f"\nExchange Rates: {len(rates)}")
+print(f"USD→EUR: {rates.get('EUR')}, USD→CHF: {rates.get('CHF')}")
+
+
+print(f"\nWeitere Stichproben:")
+print(f"  USA:        {ratings.get('United States')}")
+print(f"  China:      {ratings.get('China')}")
+print(f"  Pakistan:   {ratings.get('Pakistan')}")
+print(f"  Argentina:  {ratings.get('Argentina')}")
+print(f"  Bhutan:     {ratings.get('Bhutan')}  (sollte None sein - kein Rating)")
