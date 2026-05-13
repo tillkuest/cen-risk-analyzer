@@ -136,3 +136,7 @@ print(f"   Eingelesene Policies (IOL#):  {df['IOL#'].nunique() if False else 101
 print(f"   Erfolgreich verarbeitet:      {len(results)}")
 print(f"   Übersprungen:                 {len(processor.skipped)}")
 print(f"   Coverage:                     {len(results) / 101 * 100:.1f}%")
+
+
+from src.visualizer import generate_all
+generate_all(results, processor.policies)
