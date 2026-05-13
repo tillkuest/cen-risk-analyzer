@@ -2,13 +2,13 @@ import pandas as pd
 
 from src.models import Country, MultiCountryPolicy, Policy, RATING_TO_PD, SingleCountryPolicy
 
-# Mapping für dokumentierte Excel↔Wikipedia-Namensunterschiede
+# Mapping für dokumentierte Excel <-> Wikipedia-Namensunterschiede
 NAME_MAPPING: dict[str, str] = {
     "Cape Verde":  "Cabo Verde",
     "Ivory Coast": "Côte d'Ivoire",
-    "DR Congo":    "Democratic Republic of the Congo",
-    "DRC":         "Democratic Republic of the Congo",
-    "Congo":       "Republic of the Congo",
+    "DR Congo": "Democratic Republic of the Congo",
+    "DRC": "Democratic Republic of the Congo",
+    "Congo": "Republic of the Congo",
 }
 
 
