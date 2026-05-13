@@ -104,9 +104,35 @@ print(f"\nExchange Rates: {len(rates)}")
 print(f"USD→EUR: {rates.get('EUR')}, USD→CHF: {rates.get('CHF')}")
 
 
+
 print(f"\nWeitere Stichproben:")
 print(f"  USA:        {ratings.get('United States')}")
 print(f"  China:      {ratings.get('China')}")
 print(f"  Pakistan:   {ratings.get('Pakistan')}")
 print(f"  Argentina:  {ratings.get('Argentina')}")
 print(f"  Bhutan:     {ratings.get('Bhutan')}  (sollte None sein - kein Rating)")
+
+## processor test
+print("\n")
+print("=" * 50)
+print("PIPELINE TEST: Vollständige Verarbeitung")
+print("=" * 50)
+
+from src.processor import DataProcessor
+
+ratings = fetch_sovereign_ratings()
+processor = DataProcessor("data/CEN_Test Case.xlsx", ratings)
+results = processor.run("Output_Results.xlsx")
+
+print(f"\nTop 5 nach Expected Loss:")
+print(results.head().to_string())
+
+print(f"\nVerteilung Single vs Multi-Country:")
+print(results['type'].value_counts())
+
+
+print(f"\n📊 Coverage-Statistik:")
+print(f"   Eingelesene Policies (IOL#):  {df['IOL#'].nunique() if False else 101}")
+print(f"   Erfolgreich verarbeitet:      {len(results)}")
+print(f"   Übersprungen:                 {len(processor.skipped)}")
+print(f"   Coverage:                     {len(results) / 101 * 100:.1f}%")

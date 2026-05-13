@@ -53,7 +53,7 @@ def fetch_sovereign_ratings() -> dict[str, str]:
         for _, row in df.iterrows():
             country = str(row[country_col]).strip()
             raw_rating = str(row[sp_col])
-            rating = re.sub(r"\s*[\[\(][^\]\)]*[\]\)]", "", raw_rating).strip()
+            rating = re.sub(r"\s*[\[\(][^\]\)]*[\]\)]", "", raw_rating).strip() # old Wiki required this, just in case here
             if rating:
                 result[country] = rating
 

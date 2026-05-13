@@ -22,8 +22,9 @@ RATING_TO_PD = {
     "CCC":  0.2200,
     "CCC-": 0.3000,
     "CC":   0.4500,
-    "C":    0.6000,
+    "C":    0.4700,
     "D":    1.0000,
+    "SD":   0.5000,  # Selective Default (S&P partial-default rating)
 }
 
 B_FACTOR = {1: 0.6, 2: 0.5, 3: 0.42}
