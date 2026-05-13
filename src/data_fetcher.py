@@ -18,6 +18,19 @@ FALLBACK_RATINGS: dict[str, str] = {
     "Ethiopia":      "B-",
 }
 
+FALLBACK_MOODYS: dict[str, str] = {
+    "United States": "Aaa",
+    "Germany":       "Aaa",
+    "United Kingdom":"Aa3",
+    "France":        "Aa2",
+    "Japan":         "A1",
+    "China":         "A1",
+    "Brazil":        "Ba1",
+    "Argentina":     "Caa3",
+    "Pakistan":      "Caa2",
+    "South Africa":  "Ba2",
+}
+
 FALLBACK_RATES: dict[str, float] = {
     "EUR": 0.92,
     "GBP": 0.79,
@@ -25,6 +38,15 @@ FALLBACK_RATES: dict[str, float] = {
     "JPY": 149.50,
     "CNY": 7.24,
 }
+
+_WIKI_URL = "https://en.wikipedia.org/wiki/List_of_countries_by_credit_rating"
+
+
+def _set_browser_user_agent() -> None:
+    """Install a Mozilla User-Agent globally so Wikipedia accepts our requests."""
+    opener = urllib.request.build_opener()
+    opener.addheaders = [("User-Agent", "Mozilla/5.0")]
+    urllib.request.install_opener(opener)
 
 
 def fetch_sovereign_ratings() -> dict[str, str]:
@@ -34,14 +56,9 @@ def fetch_sovereign_ratings() -> dict[str, str]:
     Falls back to FALLBACK_RATINGS on any error.
     """
     try:
-        opener = urllib.request.build_opener()
-        opener.addheaders = [("User-Agent", "Mozilla/5.0")]
-        urllib.request.install_opener(opener)
+        _set_browser_user_agent()
 
-        tables = pd.read_html(
-            "https://en.wikipedia.org/wiki/List_of_countries_by_credit_rating",
-            match="Country/Territory",
-        )
+        tables = pd.read_html(_WIKI_URL, match="Country/Territory")
         df = tables[0]
 
         country_col = next(c for c in df.columns if "country" in c.lower())
@@ -53,7 +70,7 @@ def fetch_sovereign_ratings() -> dict[str, str]:
         for _, row in df.iterrows():
             country = str(row[country_col]).strip()
             raw_rating = str(row[sp_col])
-            rating = re.sub(r"\s*[\[\(][^\]\)]*[\]\)]", "", raw_rating).strip() # old Wiki required this, just in case here
+            rating = re.sub(r"\s*[\[\(][^\]\)]*[\]\)]", "", raw_rating).strip()
             if rating:
                 result[country] = rating
 
@@ -62,6 +79,38 @@ def fetch_sovereign_ratings() -> dict[str, str]:
     except Exception as e:
         print(f"Warning: Could not fetch sovereign ratings ({e}). Using fallback data.")
         return FALLBACK_RATINGS.copy()
+
+
+def fetch_moodys_ratings() -> dict[str, str]:
+    """Fetch sovereign Moody's credit ratings from Wikipedia.
+
+    Returns a dict mapping country name to Moody's rating string, e.g. {'Brazil': 'Ba1'}.
+    Falls back to FALLBACK_MOODYS on any error.
+    """
+    try:
+        _set_browser_user_agent()
+
+        tables = pd.read_html(_WIKI_URL, match="Country/Territory")
+        df = tables[2]
+
+        country_col = next(c for c in df.columns if "country" in c.lower())
+        rating_col = next(c for c in df.columns if "rating" in c.lower())
+
+        df = df[[country_col, rating_col]].dropna()
+
+        result: dict[str, str] = {}
+        for _, row in df.iterrows():
+            country = str(row[country_col]).strip()
+            raw_rating = str(row[rating_col])
+            rating = re.sub(r"\s*[\[\(][^\]\)]*[\]\)]", "", raw_rating).strip()
+            if rating:
+                result[country] = rating
+
+        return result
+
+    except Exception as e:
+        print(f"Warning: Could not fetch Moody's ratings ({e}). Using fallback data.")
+        return FALLBACK_MOODYS.copy()
 
 
 def fetch_exchange_rates(base: str = "USD") -> dict[str, float]:
