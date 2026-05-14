@@ -26,6 +26,7 @@ def plot_top_exposures(results: pd.DataFrame, output_dir: str = "visuals", n: in
 
     bar_colors = [_TYPE_COLORS[t] for t in top["type"]]
     ax.bar(top["policy_id"], top["el_m"], color=bar_colors)
+    ax.set_ylim(0, top["el_m"].max() * 1.15)
 
     for _, row in top.iterrows():
         ax.text(row["policy_id"], row["el_m"], f"${row['el_m']:.1f}M",
@@ -88,12 +89,13 @@ def plot_country_concentration(policies: list, output_dir: str = "visuals", n: i
 
 def plot_pd_distribution(results: pd.DataFrame, output_dir: str = "visuals") -> None:
     """Stacked bar chart of policy counts per PD bucket, split by type."""
-    bins = [0, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0]
+    bins = [0, 0.005, 0.01, 0.05, 0.1, 0.499999, 1.0]
     bin_labels = ["<0.5%", "0.5–1%", "1–5%", "5–10%", "10–50%", "≥50%"]
 
     temp = results[["pd", "type"]].copy()
     temp["bucket"] = pd.cut(temp["pd"], bins=bins, labels=bin_labels, include_lowest=True)
     counts = temp.groupby(["bucket", "type"], observed=True).size().unstack(fill_value=0)
+    counts = counts[[c for c in ["single", "multi"] if c in counts.columns]]
 
     fig, ax = plt.subplots(figsize=_FIGSIZE)
     counts.plot(kind="bar", stacked=True, ax=ax, rot=0,
