@@ -1,8 +1,8 @@
 # CEN Risk Analyzer
 
-A Python application that automates Probability of Default (PD) and Expected Loss calculations for Political Risk Insurance (CEN) policies, based on Swiss Re's published Political Risk Modelling Framework. The system reads policy data from Excel, fetches live sovereign credit ratings (S&P and Moody's) from Wikipedia and live exchange rates from ExchangeRate-API, processes the data through an Object-Oriented model, and produces an annotated Excel output plus four analytical visualizations.
+A Python application that automates Probability of Default (PD) and Expected Loss calculations for Political Risk Insurance (CEN) policies, based on a smiplified Swiss Re's Political Risk Modelling Framework. The system reads policy data from Excel, fetches live sovereign credit ratings (S&P and Moody's) from Wikipedia and live exchange rates from ExchangeRate-API, processes the data through an Object-Oriented model, and produces an annotated Excel output plus four analytical visualizations.
 
-This project was developed as a semester project for INFPROG2 (FS26, ZHAW). It demonstrates programming competencies in OOP, internet data access, robust API handling, Pandas-based data processing, visualization, and unit testing.
+This project was developed as a semester project. It demonstrates programming competencies in OOP, internet data access, robust API handling, Pandas-based data processing, visualization, and unit testing.
 
 ---
 
@@ -71,17 +71,13 @@ The model in `Political_Risk_Modelling_Framework_FINAL.pdf` describes a full Swi
 
 1. **PDs derived from S&P ratings only, not iPDs.** The paper specifies iPDs = 33% SiEDF + 33% S&P + 33% Moody's. SiEDF data is proprietary and not publicly available, so I approximate by mapping S&P ratings to PD values directly (`RATING_TO_PD` in `models.py`).
 
-2. **Only proportional reinsurance cover is modeled.** Non-proportional cover requires Underwriter judgment for peak-risk selection, which falls outside the automated scope.
+2. **Default UGD / LGD / PHR values are used for all policies.** The paper's CEN defaults (UGD=0.5, LGD=0.3, PHR=0.1) are calibrated values. UW-level overrides would require domain expertise not reconstructible from the Excel input.
 
-3. **Tenor is computed as `(expiry_date − effective_date) / 365.25`.** The paper distinguishes an "economic tenor" with explicit amortization profiles (Appendix B). Without a UW providing these inputs, simple date difference is a consistent approximation.
+3. **Missing ratings are filled by a deterministic fallback chain.** Instead of UW judgment for unrated countries, the code tries S&P, then Moody's (with notation conversion via `MOODYS_TO_SP`), then defaults to `"B"`. The actual rating source per policy is tracked and exposed in the output (`rating_source` column).
 
-4. **Default UGD / LGD / PHR values are used for all policies.** The paper's CEN defaults (UGD=0.5, LGD=0.3, PHR=0.1) are calibrated values. UW-level overrides would require domain expertise not reconstructible from the Excel input.
+4. **The `b`-scaling factor for the multi-country formula is looked up at `round(tenor)`.** The paper defines `b` only at tenors {1, 2, 3} years; out-of-range tenors are clipped to the nearest defined value.
 
-5. **Missing ratings are filled by a deterministic fallback chain.** Instead of UW judgment for unrated countries, the code tries S&P, then Moody's (with notation conversion via `MOODYS_TO_SP`), then defaults to `"B"`. The actual rating source per policy is tracked and exposed in the output (`rating_source` column).
-
-6. **The `b`-scaling factor for the multi-country formula is looked up at `round(tenor)`.** The paper defines `b` only at tenors {1, 2, 3} years; out-of-range tenors are clipped to the nearest defined value.
-
-7. **Political Violence loading (~3.5%) and the Sovereign GCorr correlation model are not implemented.** Both are mentioned in the paper but would require additional calibration and a Monte-Carlo simulation engine.
+5. **Political Violence loading (~3.5%) and the Sovereign GCorr correlation model are not implemented.** Both are mentioned in the paper but would require additional calibration and a Monte-Carlo simulation engine.
 
 These simplifications keep the implementation focused on the core competencies the course measures, while preserving the conceptual structure of the Swiss-Re framework.
 
@@ -91,12 +87,21 @@ These simplifications keep the implementation focused on the core competencies t
 
 After running `python main.py`, the following artifacts are produced:
 
-- **`Output_Results.xlsx`** – one row per policy with: `policy_id`, `type` (single/multi), `n_countries`, `max_lol`, `tenor_years`, `pd`, `expected_loss`, `rating_source`. Sorted descending by Expected Loss.
-- **`visuals/top_exposures.png`** – Top 10 policies by Expected Loss.
-- **`visuals/country_concentration.png`** – Top 10 countries by aggregated Expected Loss exposure.
-- **`visuals/pd_distribution.png`** – Histogram of PDs across the portfolio.
-- **`visuals/portfolio_composition.png`** – Single vs. Multi-country split, by count and by Expected Loss.
+**`Output_Results.xlsx`** — one row per policy with: `policy_id`, `type` (single/multi), `n_countries`, `max_lol`, `tenor_years`, `pd`, `expected_loss`, `rating_source`. Sorted descending by Expected Loss.
 
-Typical run statistics (with the provided `CEN_Test Case.xlsx`):
-- 101 policies processed, 0 skipped (100% coverage)
-- ~77% via S&P ratings, ~5% via Moody's fallback, ~18% via default rating
+**`visuals/` directory — eight PNG charts:**
+
+| File | Question it answers |
+|---|---|
+| `top_exposures.png` | Which 10 individual policies carry the largest Expected Loss? |
+| `country_concentration.png` | Which 10 countries contribute the most Expected Loss (aggregated across all policies, multi-country contribution split proportionally by LoL share)? |
+| `country_exposure.png` | Which 10 countries have the largest nominal exposure (sum of Limits of Liability)? |
+| `pd_distribution.png` | How are policies distributed across PD buckets (<0.5%, 0.5–1%, …, ≥50%)? |
+| `rating_distribution.png` | How many policies sit in each rating bucket (worst rating in multi-country groups)? |
+| `rating_by_exposure.png` | How much total exposure sits in each rating bucket — i.e. is the nominal volume concentrated in investment-grade or speculative-grade countries? |
+| `portfolio_composition.png` | What is the split between single-country and multi-country policies, by count and by Expected Loss? |
+| `exposure_vs_tenor.png` | How does nominal exposure relate to tenor? (Log-scale Y, point size = Expected Loss.) |
+
+Typical run statistics:
+- 319 policies processed, 0 skipped (100% coverage)
+- Rating sources approximately: ~85% S&P, ~5% Moody's, ~10% Default fallback
