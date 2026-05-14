@@ -150,10 +150,9 @@ print(f"\nVerteilung Single vs Multi-Country:")
 print(results["type"].value_counts().to_string())
 
 print(f"\n📊 Coverage-Statistik:")
-print(f"   Eingelesene Policies (IOL#):  101")
-print(f"   Erfolgreich verarbeitet:      {len(results)}")
-print(f"   Übersprungen:                 {len(processor.skipped)}")
-print(f"   Coverage:                     {len(results) / 101 * 100:.1f}%")
+total_policies = processor.df_raw["IOL#"].nunique()
+print(f"   Eingelesene Policies (IOL#):  {total_policies}")
+print(f"   Coverage:                     {len(results) / total_policies * 100:.1f}%")
 
 print(f"\n📊 Rating-Quellen-Verteilung:")
 print(results["rating_source"].value_counts().to_string())
