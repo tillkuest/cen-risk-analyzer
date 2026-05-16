@@ -430,7 +430,7 @@ visualizations (matplotlib + seaborn) are auto-generated.</td>
 <code>SingleCountryPolicy</code>, <code>MultiCountryPolicy</code>
 (including the Swiss-Re paper example and the
 <code>min()</code>-clipping edge case), and date-validation in the
-<code>Policy</code> base. Type hints throughout. Documented design
+<code>Policy</code> base. Type hints for help. Documented design
 decisions.</td>
 <td><code>tests/test_models.py</code></td>
 </tr>
@@ -448,12 +448,16 @@ decisions.</td>
 <div id="run-the-end-to-end-pipeline" class="section level3">
 <h3>2. Run the end-to-end pipeline</h3>
 <pre class="bash"><code>python main.py</code></pre>
-<p>This will: 1. Fetch S&amp;P and Moody’s sovereign ratings from
-Wikipedia 2. Fetch live USD exchange rates from ExchangeRate-API 3.
-Process <code>data/CEN_Test Case.xlsx</code> through the OOP model 4.
-Export <code>Output_Results.xlsx</code> with PD, Expected Loss, and
-rating source per policy 5. Generate four visualizations in
-<code>visuals/</code></p>
+<p>This will:</p>
+<ol style="list-style-type: decimal">
+<li>Fetch S&amp;P and Moody’s sovereign ratings from Wikipedia</li>
+<li>Fetch live USD exchange rates from ExchangeRate-API</li>
+<li>Process <code>data/CEN_Test Case.xlsx</code> through the OOP
+model</li>
+<li>Export <code>Output_Results.xlsx</code> with PD, Expected Loss, and
+rating source per policy</li>
+<li>Generate four visualizations in <code>visuals/</code></li>
+</ol>
 </div>
 <div id="run-the-unit-tests" class="section level3">
 <h3>3. Run the unit tests</h3>
