@@ -42,7 +42,7 @@ FALLBACK_RATES: dict[str, float] = {
 _WIKI_URL = "https://en.wikipedia.org/wiki/List_of_countries_by_credit_rating"
 
 
-def _set_browser_user_agent() -> None:
+def set_browser_user_agent():
     """Install a Mozilla User-Agent globally so Wikipedia accepts our requests."""
     opener = urllib.request.build_opener()
     opener.addheaders = [("User-Agent", "Mozilla/5.0")]
@@ -52,11 +52,11 @@ def _set_browser_user_agent() -> None:
 def fetch_sovereign_ratings() -> dict[str, str]:
     """Fetch sovereign S&P credit ratings from Wikipedia.
 
-    Returns a dict mapping country name to S&P rating string, e.g. {'Kenya': 'B'}.
+    Returns a dict mapping country name to S&P rating string, e.g. {'Germany': 'AAA'}.
     Falls back to FALLBACK_RATINGS on any error.
     """
     try:
-        _set_browser_user_agent()
+        set_browser_user_agent()
 
         tables = pd.read_html(_WIKI_URL, match="Country/Territory")
         df = tables[0]
@@ -66,19 +66,19 @@ def fetch_sovereign_ratings() -> dict[str, str]:
 
         df = df[[country_col, sp_col]].dropna()
 
-        result: dict[str, str] = {}
-        for _, row in df.iterrows():
-            country = str(row[country_col]).strip()
+        result = {}
+        for _, row in df.iterrows(): # ignore index -> _ 
+            country = str(row[country_col]).strip() 
             raw_rating = str(row[sp_col])
-            rating = re.sub(r"\s*[\[\(][^\]\)]*[\]\)]", "", raw_rating).strip()
-            if rating:
+            rating = re.sub(r"\s*[\[\(][^\]\)]*[\]\)]", "", raw_rating).strip() # wenn "AA [outlook: stable]" zu "AA"
+            if rating: # ausführen, wenn rating = "A" z.B, aber nicht ausführen, wenn rating = ""!
                 result[country] = rating
 
         return result
 
     except Exception as e:
         print(f"Warning: Could not fetch sovereign ratings ({e}). Using fallback data.")
-        return FALLBACK_RATINGS.copy()
+        return FALLBACK_RATINGS.copy() # .copy() empfohlen, damit niemand die Dict mutiert
 
 
 def fetch_moodys_ratings() -> dict[str, str]:
@@ -88,7 +88,7 @@ def fetch_moodys_ratings() -> dict[str, str]:
     Falls back to FALLBACK_MOODYS on any error.
     """
     try:
-        _set_browser_user_agent()
+        set_browser_user_agent()
 
         tables = pd.read_html(_WIKI_URL, match="Country/Territory")
         df = tables[2]
@@ -98,7 +98,7 @@ def fetch_moodys_ratings() -> dict[str, str]:
 
         df = df[[country_col, rating_col]].dropna()
 
-        result: dict[str, str] = {}
+        result = {}
         for _, row in df.iterrows():
             country = str(row[country_col]).strip()
             raw_rating = str(row[rating_col])
@@ -113,7 +113,7 @@ def fetch_moodys_ratings() -> dict[str, str]:
         return FALLBACK_MOODYS.copy()
 
 
-def fetch_exchange_rates(base: str = "USD") -> dict[str, float]:
+def fetch_exchange_rates(base = "USD") -> dict[str, float]:
     """Fetch live exchange rates from open.er-api.com (no API key required).
 
     Returns a dict mapping currency code to rate relative to base, e.g. {'EUR': 0.92}.

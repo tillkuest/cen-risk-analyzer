@@ -27,25 +27,20 @@ DEFAULT_RATING: str = "B"
 
 
 class DataProcessor:
-    def __init__(
-        self,
-        excel_path: str,
-        sp_ratings: dict[str, str],
-        moodys_ratings: dict[str, str],
-    ):
+    def __init__(self, excel_path, sp_ratings: dict[str, str], moodys_ratings: dict[str, str]):
         self.excel_path = excel_path
         self.sp_ratings = sp_ratings
         self.moodys_ratings = moodys_ratings
-        self.df_raw: pd.DataFrame | None = None
-        self.policies: list[Policy] = []
-        self.skipped: list[str] = []
+        self.df_raw = None
+        self.policies = []
+        self.skipped = []
         self.policy_sources: dict[str, str] = {}
 
-    def _resolve_rating(self, country_name: str) -> tuple[str, str]:
+    def resolve_rating(self, country_name: str) -> tuple[str, str]:
         """Return (rating, source) for a country via S&P → Moody's → default fallback."""
         # 1. Try S&P
         if country_name in self.sp_ratings:
-            rating = self.sp_ratings[country_name].replace("−", "-")
+            rating = self.sp_ratings[country_name].replace("−", "-") # Achtung, Tabelle in Wiki komische formatierung, darum ändern!
             if rating in RATING_TO_PD:
                 return rating, "S&P"
 
@@ -53,7 +48,7 @@ class DataProcessor:
         if country_name in self.moodys_ratings:
             moodys = self.moodys_ratings[country_name].replace("−", "-")
             sp_equivalent = MOODYS_TO_SP.get(moodys)
-            if sp_equivalent and sp_equivalent in RATING_TO_PD:
+            if sp_equivalent in RATING_TO_PD:
                 return sp_equivalent, "Moody's"
 
         # 3. Default
@@ -63,29 +58,29 @@ class DataProcessor:
         """Load Excel file, strip strings, parse dates. Saves result to self.df_raw."""
         df = pd.read_excel(self.excel_path)
 
-        for col in df.select_dtypes(include="object").columns:
+        for col in df.select_dtypes(include="object").columns: # ="object" (NUR txt spalten) -> alle Spalten (wichtig für Burundi z.B.)
             df[col] = df[col].str.strip()
 
-        for col in ["Effective Date", "Expiry Date"]:
+        for col in ["Effective Date", "Expiry Date"]: # in datetime umwandeln
             df[col] = pd.to_datetime(df[col])
 
         print(f"Loaded {len(df)} rows from {self.excel_path}")
         self.df_raw = df
         return df
 
-    def build_policies(self, df: pd.DataFrame) -> list[Policy]:
+    def build_policies(self, df: pd.DataFrame):
         """Group rows by IOL#, build Policy objects. Saves result to self.policies."""
         policies: list[Policy] = []
         self.skipped = []
         self.policy_sources = {}
 
-        for policy_id, group in df.groupby("IOL#"):
+        for policy_id, group in df.groupby("IOL#"): # groupby -> nach PolID gruppieren! Single country 1 Zeile, Multi mehrere
             exposures: list[tuple[Country, float]] = []
             country_sources: list[str] = []
 
             for _, row in group.iterrows():
-                country_name = NAME_MAPPING.get(row["Risk Country"], row["Risk Country"])
-                rating, source = self._resolve_rating(country_name)
+                country_name = NAME_MAPPING.get(row["Risk Country"], row["Risk Country"]) # classic Problem Country names
+                rating, source = self.resolve_rating(country_name)
                 exposures.append((Country(country_name, rating), float(row["Exposure (USD)"])))
                 country_sources.append(source)
 
@@ -97,26 +92,18 @@ class DataProcessor:
             else:
                 policy_source = "S&P"
 
-            effective_date = group.iloc[0]["Effective Date"].date()
+            effective_date = group.iloc[0]["Effective Date"].date() # iloc (integer location reicht (bei MC alle Datum gleich), datetime in date konvertieren
             expiry_date = group.iloc[0]["Expiry Date"].date()
 
             try:
-                if len(exposures) == 1:
-                    policy: Policy = SingleCountryPolicy(
-                        policy_id=str(policy_id),
-                        exposures=exposures,
-                        effective_date=effective_date,
-                        expiry_date=expiry_date,
-                    )
+                if len(exposures) == 1: # 1 Policy --> single country
+                    policy = SingleCountryPolicy(policy_id=str(policy_id), exposures=exposures, effective_date=effective_date, expiry_date=expiry_date)
                 else:
-                    policy = MultiCountryPolicy(
-                        policy_id=str(policy_id),
-                        exposures=exposures,
-                        effective_date=effective_date,
-                        expiry_date=expiry_date,
-                    )
+                    policy = MultiCountryPolicy(policy_id=str(policy_id), exposures=exposures, effective_date=effective_date, expiry_date=expiry_date)
+                
                 policies.append(policy)
                 self.policy_sources[str(policy_id)] = policy_source
+                
             except ValueError as e:
                 self.skipped.append(f"{policy_id}: {e}")
 
@@ -138,9 +125,10 @@ class DataProcessor:
                 "rating_source": self.policy_sources.get(policy.policy_id, "unknown"),
             })
         df = pd.DataFrame(rows)
+        
         return df.sort_values("expected_loss", ascending=False).reset_index(drop=True)
 
-    def export(self, results: pd.DataFrame, output_path: str) -> None:
+    def export(self, results: pd.DataFrame, output_path: str):
         """Write results DataFrame to Excel."""
         results.to_excel(output_path, index=False)
 
@@ -157,5 +145,4 @@ class DataProcessor:
         if m > 0:
             for reason in self.skipped[:5]:
                 print(f"  - {reason}")
-
         return results

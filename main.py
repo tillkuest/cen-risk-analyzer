@@ -12,7 +12,7 @@ def main() -> None:
     print("🔍 Fetching ratings from Wikipedia...")
     sp_ratings = fetch_sovereign_ratings()
     moodys_ratings = fetch_moodys_ratings()
-    print(f"   S&P: {len(sp_ratings)} countries, Moodys: {len(moodys_ratings)} countries")
+    print(f" S&P: {len(sp_ratings)} countries, Moodys: {len(moodys_ratings)} countries")
 
     print("\n⚙️  Running pipeline...")
     processor = DataProcessor("data/CEN_Test Case.xlsx", sp_ratings, moodys_ratings)

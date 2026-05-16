@@ -17,7 +17,7 @@ _PALETTE = sns.color_palette("muted", 2)
 _TYPE_COLORS = {"single": _PALETTE[0], "multi": _PALETTE[1]}
 
 
-def plot_top_exposures(results: pd.DataFrame, output_dir: str = "visuals", n: int = 10) -> None:
+def plot_top_exposures(results: pd.DataFrame, output_dir = "visuals", n = 10): # n = 10 -> top10
     """Bar chart of top n policies by expected loss, colored by type."""
     top = results.head(n).copy()
     top["el_m"] = top["expected_loss"] / 1e6
@@ -42,7 +42,7 @@ def plot_top_exposures(results: pd.DataFrame, output_dir: str = "visuals", n: in
     plt.close()
 
 
-def plot_country_concentration(policies: list, output_dir: str = "visuals", n: int = 10) -> None:
+def plot_country_concentration(policies: list, output_dir = "visuals", n = 10):
     """Stacked horizontal bar chart of top n countries by expected loss contribution."""
     single_contrib: dict[str, float] = defaultdict(float)
     multi_contrib: dict[str, float] = defaultdict(float)
@@ -87,7 +87,7 @@ def plot_country_concentration(policies: list, output_dir: str = "visuals", n: i
     plt.close()
 
 
-def plot_pd_distribution(results: pd.DataFrame, output_dir: str = "visuals") -> None:
+def plot_pd_distribution(results: pd.DataFrame, output_dir = "visuals"):
     """Stacked bar chart of policy counts per PD bucket, split by type."""
     bins = [0, 0.005, 0.01, 0.05, 0.1, 0.499999, 1.0]
     bin_labels = ["<0.5%", "0.5–1%", "1–5%", "5–10%", "10–50%", "≥50%"]
@@ -110,7 +110,7 @@ def plot_pd_distribution(results: pd.DataFrame, output_dir: str = "visuals") -> 
     plt.close()
 
 
-def plot_portfolio_composition(results: pd.DataFrame, output_dir: str = "visuals") -> None:
+def plot_portfolio_composition(results: pd.DataFrame, output_dir = "visuals"):
     """Two pie charts: policy count and expected loss, split by single vs multi."""
     counts = results["type"].value_counts()
     el_by_type = results.groupby("type")["expected_loss"].sum()
@@ -131,7 +131,7 @@ def plot_portfolio_composition(results: pd.DataFrame, output_dir: str = "visuals
     plt.close()
 
 
-def plot_country_exposure(policies: list, output_dir: str = "visuals", n: int = 10) -> None:
+def plot_country_exposure(policies: list, output_dir = "visuals", n = 10):
     """Stacked horizontal bar chart of top n countries by total nominal LoL."""
     single_lol: dict[str, float] = defaultdict(float)
     multi_lol: dict[str, float] = defaultdict(float)
@@ -209,7 +209,7 @@ def _get_policy_rating(policy) -> str:
     return next(country.rating for country, _ in policy.exposures if country.pd == worst_pd)
 
 
-def plot_rating_distribution(policies: list, output_dir: str = "visuals") -> None:
+def plot_rating_distribution(policies: list, output_dir = "visuals"):
     """Bar chart of policy count per rating bucket, worst rating for multi-country."""
     rating_counts: Counter = Counter()
 
@@ -232,7 +232,7 @@ def plot_rating_distribution(policies: list, output_dir: str = "visuals") -> Non
     plt.close()
 
 
-def plot_rating_by_exposure(policies: list, output_dir: str = "visuals") -> None:
+def plot_rating_by_exposure(policies: list, output_dir = "visuals"):
     """Bar chart of total max_lol per rating bucket, worst rating for multi-country."""
     lol_by_rating: dict[str, float] = defaultdict(float)
 
@@ -255,7 +255,7 @@ def plot_rating_by_exposure(policies: list, output_dir: str = "visuals") -> None
     plt.close()
 
 
-def plot_exposure_vs_tenor(results: pd.DataFrame, output_dir: str = "visuals") -> None:
+def plot_exposure_vs_tenor(results: pd.DataFrame, output_dir = "visuals"):
     """Scatter plot of max_lol vs tenor_years, log y-scale, point size = expected_loss."""
     fig, ax = plt.subplots(figsize=_FIGSIZE)
 
@@ -279,9 +279,9 @@ def plot_exposure_vs_tenor(results: pd.DataFrame, output_dir: str = "visuals") -
     plt.close()
 
 
-def generate_all(results: pd.DataFrame, policies: list, output_dir: str = "visuals") -> None:
+def generate_all(results: pd.DataFrame, policies: list, output_dir = "visuals"):
     """Generate all eight visualizations and save to output_dir."""
-    os.makedirs(output_dir, exist_ok=True)
+    os.makedirs(output_dir, exist_ok=True) # macht den visuals Folder, wenn schon exisitiert, kein error -> exist_ok=True
     plot_top_exposures(results, output_dir)
     plot_country_concentration(policies, output_dir)
     plot_pd_distribution(results, output_dir)
